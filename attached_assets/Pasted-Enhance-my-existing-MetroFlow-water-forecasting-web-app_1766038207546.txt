@@ -1,0 +1,101 @@
+Enhance my existing MetroFlow water forecasting web application
+by adding the following FIVE advanced features together.
+
+==================================================
+1. Explainable Forecast Panel (XAI)
+==================================================
+Requirements:
+- Whenever a forecast is generated, show an explanation panel
+  describing how the forecast was derived.
+- The explanation must include:
+  • Number of historical data points used
+  • Detected trend (increasing / decreasing / stable)
+  • Seasonal or recent usage influence
+- This must be rule-based (no new ML models).
+
+UI:
+- Info card with ℹ️ icon
+- Display below the forecast result
+- Fully responsive
+
+==================================================
+2. Water Stress Indicator 🌍
+==================================================
+Requirements:
+- Classify predicted water usage into stress levels:
+  • Low Stress → usage < 60% of average
+  • Moderate Stress → 60%–85% of average
+  • High Stress → >85% of average
+- Stress level should update dynamically after every prediction.
+
+UI:
+- Badge or circular indicator
+- Color coding:
+  Green → Low
+  Yellow → Moderate
+  Red → High
+- Display message:
+  “High water stress zone – conservation recommended”
+
+==================================================
+3. Scenario Simulation Tool
+==================================================
+Requirements:
+- Allow users to simulate future conditions using sliders:
+  • Population growth (%) slider
+  • Temperature increase (°C) slider
+- Adjust forecast heuristically:
+  • Higher population increases demand
+  • Higher temperature increases demand
+- Must not modify the core ML model.
+
+UI:
+- Sliders with live value display
+- Forecast updates instantly when sliders change
+- Place near forecast section
+
+==================================================
+4. Rolling Average Smoothing Toggle
+==================================================
+Requirements:
+- Add a toggle switch:
+  • Raw Forecast
+  • Smoothed Forecast (7-day rolling average)
+- When enabled, apply rolling average smoothing
+  to forecast data and update the chart instantly.
+
+UI:
+- Toggle placed near the forecast graph
+- Clear labels
+
+==================================================
+5. Auto-Generated Monthly Usage Summary
+==================================================
+Requirements:
+- Generate a monthly summary including:
+  • Average monthly consumption
+  • Highest usage day
+  • Percentage change from previous month
+- Summary should update when new data is uploaded
+  or a forecast is generated.
+
+UI:
+- Report-style summary card
+- Include a “Generate Monthly Summary” button
+
+==================================================
+GLOBAL CONSTRAINTS
+==================================================
+- Use only HTML, CSS, and JavaScript
+- No backend, database, or API changes
+- No external libraries
+- Existing prediction and forecasting logic must continue to work
+- All features must be responsive and cleanly styled
+
+==================================================
+DELIVERABLES
+==================================================
+Provide complete updated files:
+- index.html
+- style.css
+- script.js
