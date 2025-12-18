@@ -1498,6 +1498,134 @@ body {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
+.time-of-day-section {
+    background: white;
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+}
+
+.time-of-day-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+    margin-bottom: 1.25rem;
+    color: var(--text);
+}
+
+.time-of-day-section h3 i {
+    color: var(--primary);
+    font-size: 1.25rem;
+}
+
+.time-slots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.time-slot-card {
+    background: linear-gradient(135deg, var(--primary-light), #f0f4f8);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    text-align: center;
+    transition: var(--transition);
+    position: relative;
+}
+
+.time-slot-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary);
+}
+
+.time-slot-card.peak-slot {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border-color: var(--warning);
+    box-shadow: 0 0 16px rgba(245, 158, 11, 0.3);
+}
+
+.slot-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.slot-icon {
+    font-size: 1.75rem;
+    line-height: 1;
+}
+
+.slot-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text);
+}
+
+.slot-time {
+    font-size: 0.75rem;
+    color: var(--text-light);
+}
+
+.slot-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 0.5rem 0;
+}
+
+.slot-unit {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.slot-peak-indicator {
+    height: 4px;
+    background: transparent;
+    border-radius: 2px;
+    margin-top: 0.5rem;
+}
+
+.slot-peak-indicator.peak {
+    background: linear-gradient(90deg, var(--warning), var(--danger));
+    height: 6px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.peak-demand-insight {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border: 2px solid var(--warning);
+    border-radius: var(--radius);
+    padding: 1rem;
+    text-align: center;
+    color: #92400e;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    min-height: 60px;
+}
+
+.peak-demand-insight i {
+    font-size: 1.5rem;
+    color: var(--warning);
+}
+
 @media (max-width: 768px) {
     .top-header {
         padding: 0.625rem 1rem;

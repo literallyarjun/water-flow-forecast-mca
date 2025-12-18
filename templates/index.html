@@ -150,6 +150,53 @@
                     <div class="monthly-summary-report" id="monthlySummaryReport" style="display: none;"></div>
                 </div>
 
+                <div class="time-of-day-section" id="timeOfDaySection" style="display: none;">
+                    <h3><i class="fas fa-clock"></i> Time-of-Day Demand Intelligence</h3>
+                    <div class="time-slots-grid" id="timeSlotsGrid">
+                        <div class="time-slot-card" id="morningCard">
+                            <div class="slot-header">
+                                <span class="slot-icon">🌅</span>
+                                <span class="slot-name">Morning</span>
+                                <span class="slot-time">5 AM - 11 AM</span>
+                            </div>
+                            <div class="slot-value" id="morningValue">0</div>
+                            <span class="slot-unit">L/hour</span>
+                            <div class="slot-peak-indicator" id="morningPeak"></div>
+                        </div>
+                        <div class="time-slot-card" id="afternoonCard">
+                            <div class="slot-header">
+                                <span class="slot-icon">☀️</span>
+                                <span class="slot-name">Afternoon</span>
+                                <span class="slot-time">11 AM - 4 PM</span>
+                            </div>
+                            <div class="slot-value" id="afternoonValue">0</div>
+                            <span class="slot-unit">L/hour</span>
+                            <div class="slot-peak-indicator" id="afternoonPeak"></div>
+                        </div>
+                        <div class="time-slot-card" id="eveningCard">
+                            <div class="slot-header">
+                                <span class="slot-icon">🌆</span>
+                                <span class="slot-name">Evening</span>
+                                <span class="slot-time">4 PM - 9 PM</span>
+                            </div>
+                            <div class="slot-value" id="eveningValue">0</div>
+                            <span class="slot-unit">L/hour</span>
+                            <div class="slot-peak-indicator" id="eveningPeak"></div>
+                        </div>
+                        <div class="time-slot-card" id="nightCard">
+                            <div class="slot-header">
+                                <span class="slot-icon">🌙</span>
+                                <span class="slot-name">Night</span>
+                                <span class="slot-time">9 PM - 5 AM</span>
+                            </div>
+                            <div class="slot-value" id="nightValue">0</div>
+                            <span class="slot-unit">L/hour</span>
+                            <div class="slot-peak-indicator" id="nightPeak"></div>
+                        </div>
+                    </div>
+                    <div class="peak-demand-insight" id="peakDemandInsight"></div>
+                </div>
+
                 <div class="daily-breakdown">
                     <h3><i class="fas fa-list"></i> Daily Breakdown</h3>
                     <div class="breakdown-grid" id="breakdownGrid"></div>
@@ -770,6 +817,85 @@
         Math.mean = function(arr) {
             return arr.reduce((a, b) => a + b, 0) / arr.length;
         }
+
+        function calculateTimeOfDayDemand(predictions) {
+            if (!predictions || predictions.length === 0) return null;
+
+            const timeSlots = {
+                morning: { hours: [5, 6, 7, 8, 9, 10], total: 0, count: 0 },
+                afternoon: { hours: [11, 12, 13, 14, 15], total: 0, count: 0 },
+                evening: { hours: [16, 17, 18, 19, 20], total: 0, count: 0 },
+                night: { hours: [21, 22, 23, 0, 1, 2, 3, 4], total: 0, count: 0 }
+            };
+
+            const today = new Date();
+            predictions.forEach((prediction, dayIndex) => {
+                const hoursPerSlot = 24 / 4;
+                const usagePerHour = prediction / 24;
+
+                timeSlots.morning.total += usagePerHour * 6;
+                timeSlots.morning.count += 6;
+
+                timeSlots.afternoon.total += usagePerHour * 5;
+                timeSlots.afternoon.count += 5;
+
+                timeSlots.evening.total += usagePerHour * 5;
+                timeSlots.evening.count += 5;
+
+                timeSlots.night.total += usagePerHour * 8;
+                timeSlots.night.count += 8;
+            });
+
+            const result = {
+                morning: Math.round(timeSlots.morning.total / timeSlots.morning.count),
+                afternoon: Math.round(timeSlots.afternoon.total / timeSlots.afternoon.count),
+                evening: Math.round(timeSlots.evening.total / timeSlots.evening.count),
+                night: Math.round(timeSlots.night.total / timeSlots.night.count)
+            };
+
+            return result;
+        }
+
+        function displayTimeOfDayInsights(timeData) {
+            if (!timeData) {
+                document.getElementById('timeOfDaySection').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('morningValue').textContent = timeData.morning;
+            document.getElementById('afternoonValue').textContent = timeData.afternoon;
+            document.getElementById('eveningValue').textContent = timeData.evening;
+            document.getElementById('nightValue').textContent = timeData.night;
+
+            const slots = [
+                { name: 'morning', value: timeData.morning, card: document.getElementById('morningCard') },
+                { name: 'afternoon', value: timeData.afternoon, card: document.getElementById('afternoonCard') },
+                { name: 'evening', value: timeData.evening, card: document.getElementById('eveningCard') },
+                { name: 'night', value: timeData.night, card: document.getElementById('nightCard') }
+            ];
+
+            const maxValue = Math.max(...Object.values(timeData));
+            const peakSlot = Object.entries(timeData).find(([key, val]) => val === maxValue);
+
+            slots.forEach(slot => {
+                const isPeak = slot.value === maxValue;
+                slot.card.classList.toggle('peak-slot', isPeak);
+                document.getElementById(slot.name + 'Peak').classList.toggle('peak', isPeak);
+            });
+
+            const peakNames = { morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening', night: 'Night' };
+            const peakMessage = `<i class="fas fa-exclamation-circle"></i> ${peakNames[peakSlot[0]]} demand peak detected consistently`;
+            document.getElementById('peakDemandInsight').innerHTML = peakMessage;
+
+            document.getElementById('timeOfDaySection').style.display = 'block';
+        }
+
+        const originalGenerateForecast = window.generateForecast;
+        window.generateForecast = function(days) {
+            originalGenerateForecast(days);
+            const timeData = calculateTimeOfDayDemand(originalPredictions);
+            displayTimeOfDayInsights(timeData);
+        };
 
         const uploadZone = document.getElementById('uploadZone');
         const fileInput = document.getElementById('fileInput');
