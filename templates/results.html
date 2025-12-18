@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetroFlow - Forecast Results</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="results-header">
+        <div class="header-content">
+            <a href="{{ url_for('index') }}" class="back-link">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div class="logo-small">
+                <i class="fas fa-water"></i>
+                <span>MetroFlow</span>
+            </div>
+            <a href="{{ url_for('download') }}" class="download-btn">
+                <i class="fas fa-download"></i>
+                Download Forecast
+            </a>
+        </div>
+    </header>
+
+    <main class="results-container">
+        <div class="results-flow-widget">
+            <div class="flow-left">
+                <span class="flow-label">Live Flow Level</span>
+                <div class="flow-number-large">{{ flow_level }}</div>
+                <span class="flow-status {{ flow_status }}">
+                    <i class="fas fa-circle"></i>
+                    {{ flow_status_msg }}
+                </span>
+            </div>
+            <div class="flow-right">
+                <img src="{{ url_for('static', filename='plots/flow_level_trend.png') }}?v={{ range(1000) | random }}" alt="24-Hour Flow Trend" class="sparkline-img">
+            </div>
+        </div>
+
+        <div class="model-info-bar">
+            <div class="model-badge">
+                <i class="fas fa-trophy"></i>
+                Best Model: <strong>{{ best_model }}</strong>
+            </div>
+            <div class="accuracy-badge">
+                <i class="fas fa-bullseye"></i>
+                Accuracy: <strong>{{ model_accuracy|round(0) }}%</strong>
+            </div>
+            <div class="period-badge">
+                <i class="fas fa-calendar"></i>
+                Forecast: <strong>{{ forecast_range }}</strong>
+            </div>
+        </div>
+        
+        <div class="data-source-info" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 0.5rem; padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fas fa-database" style="color: #0284c7;"></i>
+            <span>{{ data_source }} ({{ data_rows }} data points)</span>
+        </div>
+
+        <section class="chart-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-line"></i>
+                Water Consumption Trend
+            </h2>
+            <div class="chart-card full-width">
+                <img src="{{ url_for('static', filename='plots/consumption_trend.png') }}?v={{ range(1000) | random }}" alt="Water Consumption Trend" class="chart-img">
+            </div>
+        </section>
+
+        <section class="chart-section">
+            <h2 class="section-title">
+                <i class="fas fa-cloud-sun"></i>
+                Climate Indicators
+            </h2>
+            <div class="chart-card full-width">
+                <img src="{{ url_for('static', filename='plots/climate_graphs.png') }}?v={{ range(1000) | random }}" alt="Climate Indicators" class="chart-img">
+            </div>
+        </section>
+
+        <section class="chart-section">
+            <h2 class="section-title">
+                <i class="fas fa-crystal-ball"></i>
+                Water Usage Forecast
+            </h2>
+            <div class="chart-card full-width">
+                <img src="{{ url_for('static', filename='plots/forecast_plot.png') }}?v={{ range(1000) | random }}" alt="Forecast" class="chart-img">
+            </div>
+            <div class="forecast-legend">
+                <div class="legend-item">
+                    <span class="legend-color actual"></span>
+                    <span>Actual Usage</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color predicted"></span>
+                    <span>Model Prediction</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color future"></span>
+                    <span>Future Forecast</span>
+                </div>
+            </div>
+        </section>
+
+        <div class="charts-row">
+            <section class="chart-section half">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Model Performance
+                </h2>
+                <div class="chart-card">
+                    <img src="{{ url_for('static', filename='plots/model_accuracy.png') }}?v={{ range(1000) | random }}" alt="Model Accuracy Comparison" class="chart-img">
+                </div>
+            </section>
+
+            <section class="chart-section half">
+                <h2 class="section-title">
+                    <i class="fas fa-weight"></i>
+                    What Affects Usage Most
+                </h2>
+                <div class="chart-card">
+                    <img src="{{ url_for('static', filename='plots/feature_importance.png') }}?v={{ range(1000) | random }}" alt="Feature Importance" class="chart-img">
+                </div>
+            </section>
+        </div>
+
+        <div class="actions-footer">
+            <a href="{{ url_for('index') }}" class="action-btn secondary">
+                <i class="fas fa-redo"></i>
+                New Forecast
+            </a>
+            <a href="{{ url_for('download') }}" class="action-btn primary">
+                <i class="fas fa-download"></i>
+                Download CSV
+            </a>
+        </div>
+    </main>
+
+    <footer class="results-footer">
+        <p>MetroFlow - Water Consumption Forecasting System</p>
+    </footer>
+</body>
+</html>

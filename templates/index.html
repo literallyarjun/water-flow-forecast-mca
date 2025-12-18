@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetroFlow - Smart Water Usage Forecasting</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="top-header">
+        <div class="top-header-content">
+            <i class="fas fa-water"></i>
+            <span>MetroFlow – Smart Water Usage Forecasting</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-water"></i>
+                <h1>MetroFlow</h1>
+            </div>
+            <p class="tagline">Visual Water Consumption Forecasting System</p>
+        </header>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for message in messages %}
+                        <div class="flash-message">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="flow-widget">
+            <div class="flow-content">
+                <div class="flow-info">
+                    <span class="flow-label">Live Flow Level</span>
+                    <div class="flow-number-wrapper">
+                        <span class="flow-number">{{ flow_level }}</span>
+                        <span class="flow-status {{ flow_status }}">
+                            <i class="fas fa-circle"></i>
+                            {{ flow_status_msg }}
+                        </span>
+                    </div>
+                </div>
+                <div class="flow-indicator">
+                    <i class="fas fa-tint"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="forecast-section card">
+            <h2 class="section-title"><i class="fas fa-chart-line"></i> Forecast Water Usage</h2>
+            <p class="section-desc">Predict future water consumption based on current usage patterns</p>
+            
+            <div class="forecast-buttons">
+                <button type="button" class="forecast-btn" id="predict7Days" onclick="generateForecast(7)">
+                    <i class="fas fa-calendar-week"></i>
+                    Predict Next 7 Days
+                </button>
+                <button type="button" class="forecast-btn" id="predict30Days" onclick="generateForecast(30)">
+                    <i class="fas fa-calendar-alt"></i>
+                    Predict Next 30 Days
+                </button>
+            </div>
+
+            <div id="forecastResults" class="forecast-results" style="display: none;">
+                <div class="forecast-summary">
+                    <div class="summary-card">
+                        <i class="fas fa-chart-bar"></i>
+                        <div class="summary-info">
+                            <span class="summary-label">Total Predicted Usage</span>
+                            <span class="summary-value" id="totalUsage">0</span>
+                            <span class="summary-unit">liters</span>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <i class="fas fa-calendar-check"></i>
+                        <div class="summary-info">
+                            <span class="summary-label">Forecast Period</span>
+                            <span class="summary-value" id="forecastPeriod">7</span>
+                            <span class="summary-unit">days</span>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <i class="fas fa-arrow-trend-up"></i>
+                        <div class="summary-info">
+                            <span class="summary-label">Daily Average</span>
+                            <span class="summary-value" id="dailyAverage">0</span>
+                            <span class="summary-unit">liters/day</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="forecastChart"></canvas>
+                </div>
+
+                <div class="daily-breakdown">
+                    <h3><i class="fas fa-list"></i> Daily Breakdown</h3>
+                    <div class="breakdown-grid" id="breakdownGrid"></div>
+                </div>
+            </div>
+        </div>
+
+        <form action="{{ url_for('forecast') }}" method="post" enctype="multipart/form-data" class="upload-form card">
+            <h2 class="section-title"><i class="fas fa-upload"></i> Upload Data</h2>
+            
+            <div class="upload-zone" id="uploadZone">
+                <div class="upload-content">
+                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                    <p class="upload-text">Drag & drop CSV files or click to browse</p>
+                    <p class="upload-hint">Upload multiple water consumption data files or use sample data</p>
+                    <input type="file" name="files" id="fileInput" accept=".csv" class="file-input" multiple>
+                </div>
+                <div class="files-selected" id="filesSelected" style="display: none;">
+                    <div class="files-list" id="filesList"></div>
+                    <button type="button" class="clear-files-btn" id="clearFiles">
+                        <i class="fas fa-times"></i> Clear All
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-controls">
+                <div class="dropdown-wrapper">
+                    <label for="forecast_range" class="dropdown-label">Forecast Period</label>
+                    <select name="forecast_range" id="forecast_range" class="dropdown">
+                        <option value="24H">24 Hours</option>
+                        <option value="7D">7 Days</option>
+                        <option value="30D" selected>30 Days</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-chart-line"></i>
+                    Start Forecast
+                </button>
+            </div>
+
+            <p class="sample-data-note">
+                <i class="fas fa-info-circle"></i>
+                No data? Click "Start Forecast" to use sample data
+            </p>
+        </form>
+
+        <div class="manual-input-section card">
+            <h2 class="section-title"><i class="fas fa-edit"></i> Manual Water Flow Input</h2>
+            <p class="section-desc">Enter specific water flow data to get an instant prediction</p>
+            
+            
+            <div class="city-selector">
+                <label for="citySelect" class="dropdown-label">
+                    <i class="fas fa-city"></i> Select Preset City
+                </label>
+                <select id="citySelect" class="dropdown" onchange="selectCity()">
+                    <option value="">-- Choose a city --</option>
+                    <option value="chennai">Chennai</option>
+                    <option value="mumbai">Mumbai</option>
+                    <option value="delhi">Delhi</option>
+                    <option value="bangalore">Bangalore</option>
+                    <option value="villupuram">Villupuram</option>
+                    <option value="kallakurichi">Kallakurichi</option>
+                </select>
+            </div>
+            
+            <form action="{{ url_for('manual_predict') }}" method="post" class="manual-form">
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="temperature">
+                            <i class="fas fa-thermometer-half icon-temp"></i> Temperature (°C)
+                        </label>
+                        <input type="number" name="temperature" id="temperature" step="0.1" value="25" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="humidity">
+                            <i class="fas fa-droplet icon-humidity"></i> Humidity (%)
+                        </label>
+                        <input type="number" name="humidity" id="humidity" step="0.1" min="0" max="100" value="60" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="rainfall">
+                            <i class="fas fa-cloud-rain icon-rain"></i> Rainfall (mm)
+                        </label>
+                        <input type="number" name="rainfall" id="rainfall" step="0.1" min="0" value="0" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="population">
+                            <i class="fas fa-users icon-population"></i> Population Served
+                        </label>
+                        <input type="number" name="population" id="population" min="1000" value="50000" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="day_of_week">
+                            <i class="fas fa-calendar-day"></i> Day of Week
+                        </label>
+                        <select name="day_of_week" id="day_of_week" required>
+                            <option value="0">Monday</option>
+                            <option value="1">Tuesday</option>
+                            <option value="2">Wednesday</option>
+                            <option value="3">Thursday</option>
+                            <option value="4">Friday</option>
+                            <option value="5">Saturday</option>
+                            <option value="6">Sunday</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="month">
+                            <i class="fas fa-calendar"></i> Month
+                        </label>
+                        <select name="month" id="month" required onchange="updateSeasonIndicator()">
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="season-indicator" id="seasonIndicator">
+                    <div class="season-icon" id="seasonIcon">
+                        <i class="fas fa-snowflake"></i>
+                    </div>
+                    <div class="season-info">
+                        <span class="season-label" id="seasonLabel">Winter Season</span>
+                        <span class="season-message" id="seasonMessage">Moderate demand expected</span>
+                    </div>
+                </div>
+                
+                <button type="submit" class="predict-btn">
+                    <i class="fas fa-calculator"></i>
+                    Get Prediction
+                </button>
+            </form>
+            
+            {% if prediction_result %}
+            <div class="prediction-result">
+                <h3><i class="fas fa-tint"></i> Predicted Water Usage</h3>
+                <div class="prediction-value">{{ prediction_result }} <span>liters/day</span></div>
+            </div>
+            {% endif %}
+
+            <div class="anomaly-alert" id="anomalyAlert" style="display: none;">
+                <div class="anomaly-icon">
+                    <span>🚨</span>
+                </div>
+                <div class="anomaly-content">
+                    <span class="anomaly-title">Anomaly Detected</span>
+                    <span class="anomaly-message">Unusual water usage detected — possible leakage</span>
+                    <span class="anomaly-details" id="anomalyDetails"></span>
+                </div>
+                <button class="anomaly-dismiss" onclick="dismissAnomalyAlert()" title="Dismiss">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="features">
+            <div class="feature-card">
+                <i class="fas fa-brain"></i>
+                <h3>Smart ML Models</h3>
+                <p>Uses LSTM, Random Forest, and XGBoost to predict water usage</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-cloud-sun"></i>
+                <h3>Climate Aware</h3>
+                <p>Considers temperature, rainfall, humidity, and more</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-chart-area"></i>
+                <h3>Visual Reports</h3>
+                <p>Easy-to-read charts and downloadable forecasts</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = "{{ openweather_api_key or '' }}";
+
+        const cityData = {
+            chennai: {
+                population: 7088000,
+                temperature: 32,
+                humidity: 75,
+                rainfall: 5
+            },
+            mumbai: {
+                population: 12442373,
+                temperature: 30,
+                humidity: 80,
+                rainfall: 8
+            },
+            delhi: {
+                population: 16787941,
+                temperature: 28,
+                humidity: 55,
+                rainfall: 2
+            },
+            bangalore: {
+                population: 8443675,
+                temperature: 26,
+                humidity: 65,
+                rainfall: 3
+            },
+            villupuram: {
+                population: 120000,
+                temperature: 31,
+                humidity: 70,
+                rainfall: 4
+            },
+            kallakurichi: {
+                population: 100000,
+                temperature: 30,
+                humidity: 68,
+                rainfall: 4
+            }
+        };
+
+        async function fetchWeatherData() {
+            const cityInput = document.getElementById('weatherCity');
+            const cityName = cityInput.value.trim();
+            const statusDiv = document.getElementById('weatherStatus');
+            
+            if (!cityName) {
+                showWeatherStatus('Please enter a city name.', 'error');
+                return;
+            }
+            
+            if (!API_KEY || API_KEY === '') {
+                showWeatherStatus('OpenWeather API key not configured. Please add your API key.', 'error');
+                return;
+            }
+            
+            showWeatherStatus('Fetching weather data...', 'loading');
+            
+            try {
+                const response = await fetch(
+                    `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(cityName)}&appid=${API_KEY}&units=metric`
+                );
+                
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error('City not found. Please check the city name and try again.');
+                    } else if (response.status === 401) {
+                        throw new Error('Invalid API key. Please check your OpenWeather API key.');
+                    } else {
+                        throw new Error('Failed to fetch weather data. Please try again later.');
+                    }
+                }
+                
+                const data = await response.json();
+                
+                const temperature = data.main.temp;
+                const humidity = data.main.humidity;
+                
+                let rainfall = 0;
+                if (data.rain) {
+                    rainfall = data.rain['1h'] || data.rain['3h'] || 0;
+                }
+                
+                document.getElementById('temperature').value = temperature.toFixed(1);
+                document.getElementById('humidity').value = humidity;
+                document.getElementById('rainfall').value = rainfall.toFixed(1);
+                
+                const weatherDesc = data.weather[0].description;
+                showWeatherStatus(
+                    `Weather data loaded for ${data.name}: ${weatherDesc}, ${temperature.toFixed(1)}°C`,
+                    'success'
+                );
+                
+            } catch (error) {
+                showWeatherStatus(error.message, 'error');
+            }
+        }
+        
+        function showWeatherStatus(message, type) {
+            const statusDiv = document.getElementById('weatherStatus');
+            statusDiv.style.display = 'block';
+            statusDiv.className = `weather-status ${type}`;
+            
+            let icon = '';
+            if (type === 'loading') {
+                icon = '<i class="fas fa-spinner fa-spin"></i>';
+            } else if (type === 'success') {
+                icon = '<i class="fas fa-check-circle"></i>';
+            } else if (type === 'error') {
+                icon = '<i class="fas fa-exclamation-circle"></i>';
+            }
+            
+            statusDiv.innerHTML = `${icon} ${message}`;
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        function selectCity() {
+            const citySelect = document.getElementById('citySelect');
+            const selectedCity = citySelect.value;
+            
+            if (selectedCity && cityData[selectedCity]) {
+                const city = cityData[selectedCity];
+                document.getElementById('temperature').value = city.temperature;
+                document.getElementById('humidity').value = city.humidity;
+                document.getElementById('rainfall').value = city.rainfall;
+                document.getElementById('population').value = city.population;
+            }
+        }
+
+        function updateSeasonIndicator() {
+            const month = parseInt(document.getElementById('month').value);
+            const indicator = document.getElementById('seasonIndicator');
+            const icon = document.getElementById('seasonIcon');
+            const label = document.getElementById('seasonLabel');
+            const message = document.getElementById('seasonMessage');
+            
+            indicator.classList.remove('summer', 'monsoon', 'winter');
+            
+            if (month >= 3 && month <= 6) {
+                indicator.classList.add('summer');
+                icon.innerHTML = '<i class="fas fa-sun"></i>';
+                label.textContent = 'Summer Season';
+                message.textContent = 'Higher water demand expected due to heat';
+            } else if (month >= 7 && month <= 9) {
+                indicator.classList.add('monsoon');
+                icon.innerHTML = '<i class="fas fa-cloud-showers-heavy"></i>';
+                label.textContent = 'Monsoon Season';
+                message.textContent = 'Water demand may reduce due to rainfall';
+            } else {
+                indicator.classList.add('winter');
+                icon.innerHTML = '<i class="fas fa-snowflake"></i>';
+                label.textContent = 'Winter Season';
+                message.textContent = 'Moderate water demand expected';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateSeasonIndicator();
+        });
+
+        const historicalUsageData = [
+            7500000, 7200000, 7800000, 7350000, 7600000,
+            7100000, 7450000, 7250000, 7550000, 7400000,
+            7300000, 7650000, 7500000, 7200000, 7350000
+        ];
+
+        function calculateAverageUsage() {
+            const sum = historicalUsageData.reduce((a, b) => a + b, 0);
+            return sum / historicalUsageData.length;
+        }
+
+        function checkForAnomaly(currentUsage) {
+            const average = calculateAverageUsage();
+            const threshold = average * 1.30;
+            const isAnomaly = currentUsage > threshold;
+            
+            const alertElement = document.getElementById('anomalyAlert');
+            const detailsElement = document.getElementById('anomalyDetails');
+            
+            if (isAnomaly) {
+                const percentageAbove = ((currentUsage - average) / average * 100).toFixed(1);
+                detailsElement.textContent = `Current usage is ${percentageAbove}% above normal (Average: ${Math.round(average).toLocaleString()} L)`;
+                alertElement.style.display = 'flex';
+                alertElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                alertElement.style.display = 'none';
+            }
+            
+            return isAnomaly;
+        }
+
+        function dismissAnomalyAlert() {
+            document.getElementById('anomalyAlert').style.display = 'none';
+        }
+
+        const originalManualFormSubmit = document.querySelector('.manual-form');
+        if (originalManualFormSubmit) {
+            originalManualFormSubmit.addEventListener('submit', function(e) {
+                const population = parseInt(document.getElementById('population').value) || 50000;
+                const estimatedUsage = population * 150;
+                setTimeout(() => checkForAnomaly(estimatedUsage), 500);
+            });
+        }
+
+        let forecastChart = null;
+
+        function generateForecast(days) {
+            const currentUsage = parseFloat(document.getElementById('population').value) * 150;
+            const dailyGrowthRate = 0.002;
+            
+            const predictions = [];
+            const labels = [];
+            let totalUsage = 0;
+            
+            const today = new Date();
+            
+            for (let i = 1; i <= days; i++) {
+                const predictedUsage = currentUsage * (1 + dailyGrowthRate * i);
+                predictions.push(Math.round(predictedUsage));
+                totalUsage += predictedUsage;
+                
+                const futureDate = new Date(today);
+                futureDate.setDate(today.getDate() + i);
+                labels.push(futureDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+            }
+            
+            document.getElementById('totalUsage').textContent = Math.round(totalUsage).toLocaleString();
+            document.getElementById('forecastPeriod').textContent = days;
+            document.getElementById('dailyAverage').textContent = Math.round(totalUsage / days).toLocaleString();
+            
+            const breakdownGrid = document.getElementById('breakdownGrid');
+            breakdownGrid.innerHTML = '';
+            
+            const displayDays = days <= 7 ? days : 7;
+            for (let i = 0; i < displayDays; i++) {
+                const dayCard = document.createElement('div');
+                dayCard.className = 'breakdown-card';
+                dayCard.innerHTML = `
+                    <span class="breakdown-date">${labels[i]}</span>
+                    <span class="breakdown-value">${predictions[i].toLocaleString()}</span>
+                    <span class="breakdown-unit">liters</span>
+                `;
+                breakdownGrid.appendChild(dayCard);
+            }
+            
+            if (days > 7) {
+                const moreCard = document.createElement('div');
+                moreCard.className = 'breakdown-card more-card';
+                moreCard.innerHTML = `
+                    <span class="breakdown-date">+ ${days - 7} more days</span>
+                    <span class="breakdown-value">See chart</span>
+                `;
+                breakdownGrid.appendChild(moreCard);
+            }
+            
+            if (forecastChart) {
+                forecastChart.destroy();
+            }
+            
+            const ctx = document.getElementById('forecastChart').getContext('2d');
+            forecastChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Predicted Water Usage (liters)',
+                        data: predictions,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#3b82f6',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Water Usage (liters)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            document.getElementById('forecastResults').style.display = 'block';
+            document.getElementById('forecastResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            const dailyAvg = totalUsage / days;
+            checkForAnomaly(dailyAvg);
+        }
+
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const filesSelected = document.getElementById('filesSelected');
+        const filesList = document.getElementById('filesList');
+        const clearFiles = document.getElementById('clearFiles');
+        const uploadContent = document.querySelector('.upload-content');
+
+        uploadZone.addEventListener('click', (e) => {
+            if (e.target === clearFiles || clearFiles.contains(e.target)) return;
+            if (!fileInput.files.length) {
+                fileInput.click();
+            }
+        });
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                const csvFiles = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.csv'));
+                if (csvFiles.length > 0) {
+                    const dt = new DataTransfer();
+                    csvFiles.forEach(f => dt.items.add(f));
+                    fileInput.files = dt.files;
+                    showFilesSelected(csvFiles);
+                }
+            }
+        });
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) {
+                showFilesSelected(Array.from(fileInput.files));
+            }
+        });
+
+        clearFiles.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fileInput.value = '';
+            hideFilesSelected();
+        });
+
+        function showFilesSelected(files) {
+            filesList.innerHTML = '';
+            files.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <i class="fas fa-file-csv"></i>
+                    <span class="file-name">${file.name}</span>
+                `;
+                filesList.appendChild(fileItem);
+            });
+            uploadContent.style.display = 'none';
+            filesSelected.style.display = 'block';
+        }
+
+        function hideFilesSelected() {
+            uploadContent.style.display = 'block';
+            filesSelected.style.display = 'none';
+            filesList.innerHTML = '';
+        }
+    </script>
+</body>
+</html>
